@@ -152,7 +152,7 @@ function serveStatic(req, res, pathname) {
   });
 }
 
-const server = http.createServer(async (req, res) => {
+async function handler(req, res) {
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   const pathname = url.pathname;
 
@@ -411,9 +411,17 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
-  return serveStatic(req, res, pathname);
-});
+  // Fallback
+  res.writeHead(404);
+  res.end('Not found');
+}
 
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Spillet kjører på http://localhost:${PORT}`);
-});
+// Local development server
+if (require.main === module) {
+  const server = http.createServer(handler);
+  server.listen(PORT, '0.0.0.0', () => {
+    console.log(`Spillet kjører på http://localhost:${PORT}`);
+  });
+}
+
+module.exports = handler;
