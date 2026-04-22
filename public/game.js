@@ -89,6 +89,7 @@ const state = {
   magnetUntil: 0,
   elapsed: 0,
   shake: 0,
+  roomPlayers: {}, // { username: { x, playing, lastSeen } }
 };
 
 function togglePause() {
@@ -314,14 +315,12 @@ function renderHomeView(opts = {}) {
 
   document.getElementById('rulesBtn').addEventListener('click', openRules);
 
-  if (document.getElementById('createRoomBtn')) {
-    document.getElementById('createRoomBtn').addEventListener('click', async () => {
-      try {
-        if (!state.user) throw new Error('Logg inn først for å lage rom.');
-        const data = await apiFetch('/api/rooms/create', { method: 'POST' });
         state.roomCode = data.roomCode;
         state.roomFruits = data.fruits;
-        state.homeMessage = 'Rom opprettet!';
+        state.joinDraft = '';
+        state.joinSectionOpen = false;
+        state.homeMessage = 'Tilkoblet!';
+        startSync();
         await refreshLeaderboard();
         renderCurrentView();
       } catch (e) {
@@ -331,41 +330,15 @@ function renderHomeView(opts = {}) {
     });
   }
 
-  if (document.getElementById('enterCodeBtn')) {
-    document.getElementById('enterCodeBtn').addEventListener('click', () => {
-      state.joinSectionOpen = !state.joinSectionOpen;
-      renderCurrentView();
-    });
-  }
-
-  viewContainer.querySelectorAll('.emoji-key').forEach(btn => {
-    btn.addEventListener('click', () => {
-      if (state.joinDraft.length < 4) {
-        state.joinDraft += btn.dataset.fruit;
-        document.getElementById('joinCodePreview').textContent = draftToFruits(state.joinDraft) || '••••';
-      }
-    });
-  });
-
-  if (document.getElementById('removeEmojiBtn')) {
-    document.getElementById('removeEmojiBtn').addEventListener('click', () => {
-      state.joinDraft = state.joinDraft.slice(0, -1);
-      document.getElementById('joinCodePreview').textContent = draftToFruits(state.joinDraft) || '••••';
-    });
-  }
-
-  if (document.getElementById('joinRoomBtn')) {
-    document.getElementById('joinRoomBtn').addEventListener('click', async () => {
+  if (document.getElementById('createRoomBtn')) {
+    document.getElementById('createRoomBtn').addEventListener('click', async () => {
       try {
-        const data = await apiFetch('/api/rooms/join', {
-          method: 'POST',
-          body: JSON.stringify({ roomCode: state.joinDraft }),
-        });
+        if (!state.user) throw new Error('Logg inn først for å lage rom.');
+        const data = await apiFetch('/api/rooms/create', { method: 'POST' });
         state.roomCode = data.roomCode;
         state.roomFruits = data.fruits;
-        state.joinDraft = '';
-        state.joinSectionOpen = false;
-        state.homeMessage = 'Tilkoblet!';
+        state.homeMessage = 'Rom opprettet!';
+        startSync();
         await refreshLeaderboard();
         renderCurrentView();
       } catch (e) {
@@ -379,13 +352,57 @@ function renderHomeView(opts = {}) {
     document.getElementById('leaveRoomBtn').addEventListener('click', async () => {
       state.roomCode = '';
       state.roomFruits = '';
+      stopSync();
       await refreshLeaderboard();
       renderCurrentView();
     });
   }
 }
+// --- Multiplayer Sync ---
+let syncInterval = null;
+async function syncWithFriends() {
+  if (!state.roomCode || !state.user) return;
+  
+  try {
+    // Pack status into score: x (0-2000) + (playing ? 1000000 : 0)
+    const packed = Math.floor(state.monkey.x) + (state.running ? 1000000 : 0);
+    const data = await apiFetch('/api/scores', {
+      method: 'POST',
+      body: JSON.stringify({ roomCode: 'sync:' + state.roomCode, score: packed })
+    });
 
-function renderLeaderboardView() {
+    const now = Date.now();
+    const players = {};
+    (data.leaderboard || []).forEach(p => {
+      if (p.name === state.user.username) return;
+      // Filter out stale players (> 3s)
+      if (now - p.ts > 3000) return;
+      
+      const playing = p.score >= 1000000;
+      const x = p.score % 1000000;
+      players[p.name] = { x, playing, lastSeen: p.ts };
+
+      // Auto-start if buddy is playing and we aren't
+      if (playing && !state.running && !state.paused) {
+        startGame();
+      }
+    });
+    state.roomPlayers = players;
+  } catch (e) {
+    console.error('Sync error:', e);
+  }
+}
+
+function startSync() {
+  stopSync();
+  syncWithFriends();
+  syncInterval = setInterval(syncWithFriends, 500); // 500ms for balance
+}
+function stopSync() {
+  if (syncInterval) clearInterval(syncInterval);
+  syncInterval = null;
+  state.roomPlayers = {};
+}
   const first = state.leaderboard[0];
   const firstText = first ? `🥇 Ledet av ${first.name} with ${first.score}!` : 'Ingen poeng ennå';
 
@@ -892,6 +909,18 @@ function draw() {
     ctx.fillText(it.def.emoji, 0, 0);
     ctx.restore();
   }
+
+  // Draw other players
+  ctx.globalAlpha = 0.5;
+  Object.entries(state.roomPlayers).forEach(([name, p]) => {
+    ctx.font = '14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'white';
+    ctx.fillText(name, p.x, H - 90);
+    ctx.font = '40px sans-serif';
+    ctx.fillText('🐒', p.x, H - 50);
+  });
+  ctx.globalAlpha = 1.0;
 
   // Monkey
   const m = state.monkey;

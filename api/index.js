@@ -6,7 +6,7 @@ const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 
 const PORT = parseInt(process.env.PORT || '8080', 10);
-const PUBLIC_DIR = path.join(__dirname, 'public');
+const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://ycimdtppexiwkbtjyusb.supabase.co';
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'sb_publishable_WPHz81KqhGFLVHYg_IfSFA_q52Cm21p';
 
@@ -98,7 +98,9 @@ async function getSessionUser(req) {
 }
 
 function toRoomCode(raw) {
-  const cleaned = String(raw || '')
+  const s = String(raw || '');
+  if (s.startsWith('sync:')) return s;
+  const cleaned = s
     .replace(/\s+/g, '')
     .replaceAll('🍌', '0')
     .replaceAll('🍒', '1')
@@ -271,6 +273,8 @@ async function handler(req, res) {
       const roomCode = toRoomCode(body.roomCode || '') || 'global';
       const newScore = Math.max(0, Math.floor(Number(body.score) || 0));
 
+      const isSync = roomCode.startsWith('sync:');
+
       // Sjekk om brukeren allerede har poeng i dette rommet (kan være flere rader fra før)
       const { data: existingRows, error: fetchError } = await supabase
         .from('scores')
@@ -282,7 +286,7 @@ async function handler(req, res) {
 
       if (existingRows && existingRows.length > 0) {
         // Konsolider alle eksisterende rader til én
-        const totalExistingScore = existingRows.reduce((sum, r) => sum + r.score, 0);
+        const totalExistingScore = isSync ? 0 : existingRows.reduce((sum, r) => sum + r.score, 0);
         const mainId = existingRows[0].id;
         const otherIds = existingRows.slice(1).map(r => r.id);
 
