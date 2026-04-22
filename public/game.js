@@ -435,6 +435,8 @@ function stopSync() {
   syncInterval = null;
   state.roomPlayers = {};
 }
+
+function renderLeaderboardView() {
   const first = state.leaderboard[0];
   const firstText = first ? `🥇 Ledet av ${first.name} with ${first.score}!` : 'Ingen poeng ennå';
 
