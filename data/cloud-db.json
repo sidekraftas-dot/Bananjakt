@@ -1,0 +1,23 @@
+{
+  "scores": {
+    "3310": [],
+    "global": [],
+    "0302": []
+  },
+  "rooms": {
+    "3310": {
+      "createdAt": 1776848527491,
+      "host": "Sameh",
+      "members": [
+        "Sameh"
+      ]
+    },
+    "0302": {
+      "createdAt": 1776848512524,
+      "host": "Sam",
+      "members": [
+        "Sam"
+      ]
+    }
+  }
+}

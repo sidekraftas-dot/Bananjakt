@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Bananjakt" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<link rel="icon" type="image/png" href="/favicon.png?v=2" />
+<link rel="manifest" href="/manifest.json" />
+<title>Bananjakt 🐵</title>
+<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div id="hud">
+    <div class="stat">🍌 <span id="score">0</span></div>
+    <div class="stat">🔥 <span id="combo">x1</span></div>
+    <div class="stat">❤️ <span id="lives">3</span></div>
+    <div class="stat">🏆 <span id="best">0</span></div>
+    <button id="pauseBtn" class="stat clickable">⏸️</button>
+  </div>
+
+  <nav id="navbar" class="glass">
+    <button class="nav-btn active" data-view="home" title="Hjem">🏠</button>
+    <button class="nav-btn" data-view="leaderboard" title="Toppliste">🏆</button>
+    <button class="nav-btn" data-view="login" title="Logg inn" id="navLoginBtn">🔐</button>
+    <button class="nav-btn" data-view="profile" title="Min profil" id="navProfileBtn" style="display: none;">👤</button>
+  </nav>
+
+  <canvas id="game"></canvas>
+
+  <div id="overlay" class="show">
+    <div class="card glass" id="viewContainer">
+      <!-- Content injected by JS based on current view -->
+    </div>
+  </div>
+
+  <div id="pauseOverlay">
+    <h1>PAUSE</h1>
+    <p class="sub">Hva vil du gjøre?</p>
+    <div class="actions">
+      <button id="resumeBtn" class="big">Fortsett</button>
+      <button id="quitBtn" class="big secondary">Hjemskjerm</button>
+    </div>
+  </div>
+
+  <div id="rulesModal" class="modal" aria-hidden="true">
+    <div class="modal-card">
+      <h2>📘 Regler og symboler</h2>
+      <ul class="rules">
+        <li><strong>🍌 Banan:</strong> +10 poeng (ganges med kombo)</li>
+        <li><strong>🍒 Kirsebær:</strong> +15 poeng (ganges med kombo)</li>
+        <li><strong>🍇 Drue:</strong> +20 poeng (ganges med kombo)</li>
+        <li><strong>🍎 Eple:</strong> +25 poeng (ganges med kombo)</li>
+        <li><strong>🍐 Pære:</strong> +30 poeng (ganges med kombo)</li>
+        <li><strong>🍉 Vannmelon:</strong> +35 poeng (ganges med kombo)</li>
+        <li><strong>🍍 Ananas:</strong> +45 poeng (ganges med kombo)</li>
+        <li><strong>🌟 Stjerne:</strong> +1 liv (maks 8 liv)</li>
+        <li><strong>💖 Hjerte:</strong> +2 liv (faller oftere når du har lite liv)</li>
+        <li><strong>⚡ Lyn:</strong> saktefilm i 4 sekunder</li>
+        <li><strong>💎 Diamant:</strong> dobbel poeng i 6 sekunder</li>
+        <li><strong>🧲 Magnet:</strong> trekker inn gode ting i 6 sekunder</li>
+        <li><strong>🥥 Kokosnøtt:</strong> -1 liv og kombo nullstilles</li>
+        <li><strong>💣 Bombe:</strong> -2 liv, kombo nullstilles og kraftig treff</li>
+        <li><strong>☢️ Atombombe:</strong> GAME OVER umiddelbart!</li>
+      </ul>
+      <ul class="rules">
+        <li><strong>Kontroller:</strong> piltaster, A/D eller dra med finger/mus</li>
+        <li><strong>Kombo:</strong> hver 5. frukt øker kombo (opptil x8)</li>
+        <li><strong>Mål:</strong> få høyest mulig poengsum uten å miste alle liv</li>
+        <li><strong>Vennemodus:</strong> lag 4-frukt kode og del den med venn på mobil</li>
+      </ul>
+      <button id="closeRulesBtn" class="big secondary">Lukk</button>
+    </div>
+  </div>
+
+  <script src="/game.js"></script>
+</body>
+</html>
