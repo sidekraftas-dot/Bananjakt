@@ -315,6 +315,38 @@ function renderHomeView(opts = {}) {
 
   document.getElementById('rulesBtn').addEventListener('click', openRules);
 
+  if (document.getElementById('enterCodeBtn')) {
+    document.getElementById('enterCodeBtn').addEventListener('click', () => {
+      state.joinSectionOpen = !state.joinSectionOpen;
+      renderCurrentView();
+    });
+  }
+
+  viewContainer.querySelectorAll('.emoji-key').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (state.joinDraft.length < 4) {
+        state.joinDraft += btn.dataset.fruit;
+        const el = document.getElementById('joinCodePreview');
+        if (el) el.textContent = draftToFruits(state.joinDraft) || '••••';
+      }
+    });
+  });
+
+  if (document.getElementById('removeEmojiBtn')) {
+    document.getElementById('removeEmojiBtn').addEventListener('click', () => {
+      state.joinDraft = state.joinDraft.slice(0, -1);
+      const el = document.getElementById('joinCodePreview');
+      if (el) el.textContent = draftToFruits(state.joinDraft) || '••••';
+    });
+  }
+
+  if (document.getElementById('joinRoomBtn')) {
+    document.getElementById('joinRoomBtn').addEventListener('click', async () => {
+      try {
+        const data = await apiFetch('/api/rooms/join', {
+          method: 'POST',
+          body: JSON.stringify({ roomCode: state.joinDraft }),
+        });
         state.roomCode = data.roomCode;
         state.roomFruits = data.fruits;
         state.joinDraft = '';
